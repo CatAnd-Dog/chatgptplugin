@@ -8,7 +8,7 @@
 ## 使用说明
 ### 1. 安装
 ```
-git clone  
+git clone  https://github.com/CatAnd-Dog/chatgptplugin.git
 ```
 ```
 cd  chatgptplugin
