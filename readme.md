@@ -35,9 +35,13 @@ docer run  -p 15413:15413  oneperfect
 
 3、直接使用
 创建模型：
+
 gpt-3.5-online    联网模型
+
 image      画图模型
+
 plugins    在线搜索/播放  音乐和视频
+
 gpt-3.5-turbo-16k、gpt-4、gpt-4-32k     PDF 文档翻译/总结
 
 4、apikey
