@@ -6,7 +6,7 @@ oneperfect={
 "poe-online" : False ,  # 是否开启poe逆向联网功能------不建议开启，因为poe联网和3.5联网没有太大的区别，而且poe联网的速度慢，也容易封号
 "gpt-online": True ,  # 是否开启gpt-3.5 的联网功能
 "gpt-image": True ,  # 是否开启gpt 的画图功能
-"gpt-plugins": False ,  # 是否开启gpt 的插件功能，目前只有联网搜索/播放 音乐功能
+"gpt-plugins": False ,  # 是否开启gpt 的插件功能-----不要动，还没做好
 "newbing": False ,  # 是否开启必应功能-----不要动，还没做好
 "mj": False ,  # 是否开启mj画图功能-----不要动，还没做好
 }
