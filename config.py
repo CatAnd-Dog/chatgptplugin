@@ -19,7 +19,7 @@ baseurl="https://api.openai.com/"
 # poe 逆向功能
 poe={
 
-     "poe_ck":[""],   # poe 的cookie  # poe_ck=["ck1","ck2","ck3","ck4"]
+     "poe_ck":[""],   # poe 的cookie  # poe_ck=["ck1","ck2","ck3","ck4"]。如果开启poe逆向功能，cookie值需要填写大于等于4个。会自动检测失效的cookie，并替换失效的cookie。
     "poe_apikey":"",  # poe 逆向 apikey  ，如果不需要这个密码功能，可以不填
     "poe_botname":{
     "Claude-instant-100k": "a2_100k",
