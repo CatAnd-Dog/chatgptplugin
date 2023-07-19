@@ -22,7 +22,7 @@ cd  chatgptplugin
 docker build -t oneperfect .
 ```
 ```
-docer run  -p 15413:15413  oneperfect
+docker run  -p 15413:15413  oneperfect
 ```
 
 ### 2. 使用
