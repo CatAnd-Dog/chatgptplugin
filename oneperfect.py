@@ -4,6 +4,8 @@ from flask import Flask, request, jsonify, Response, make_response,stream_with_c
 from flask_cors import CORS
 import json
 import online
+import time
+import requests
 
 
 app = Flask(__name__)
@@ -39,10 +41,9 @@ def send_message():
 
     key = extract_token_from_headers()
 
-    openai.api_key = key.strip()
-
     # 调用官方3.5 联网
     if model_name =="gpt-3.5-online":    # 添加自定义模型的名称
+        openai.api_key = key.strip()
         def generate():
             print(message)
             messages= message[-1]["content"]
@@ -71,6 +72,7 @@ def send_message():
 
     # 调用官方画图
     if model_name == "image":
+        openai.api_key = key.strip()
         def generate():
             messages= message[-1]["content"]
 
@@ -85,6 +87,44 @@ def send_message():
             yield f'data: {json.dumps(response_content)}\n\n'
             yield 'data: {"choices": [{"delta": {"content": "[DONE]\n"}}]}\n\n'
 
+        response = Response(stream_with_context(generate()), content_type='text/event-stream')
+        return response
+
+
+    # 调用百度文心一言
+    if model_name =="wxyy" :
+
+        messages = message[-1]["content"]
+        url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={}".format(key.strip())
+
+        payload = json.dumps({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": messages
+                }
+            ],
+            "stream": True
+        })
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+
+        def generate():
+            response = requests.request("POST", url, headers=headers, data=payload, stream=True)
+            for R in response.iter_lines():
+                if R:
+                    rep = R.decode('utf-8')
+                    cont = json.loads(rep[6:])["result"]
+                    for c in cont:
+                        time.sleep(0.05)
+                        #print(c, end="", flush=True)
+                        response_content["choices"][0]["delta"]["content"] = c
+                        yield f'data: {json.dumps(response_content)}\n\n'
+
+
+            yield 'data: {"choices": [{"delta": {"content": "[DONE]"}}]}\n\n'
         response = Response(stream_with_context(generate()), content_type='text/event-stream')
         return response
 
