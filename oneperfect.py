@@ -49,10 +49,10 @@ def send_message():
             urls = online.google(messages)
             for index, url in enumerate(urls[:5]):
                 res = online.scrape_text(url['link'])
-                i_say = "这是第{}条搜索结果。".format(index) + res.strip() + "\n" + "对该搜索结果进行总结，然后回答问题：{}".format(messages)
+                i_say = "这是第{}条搜索结果。".format(index) + res.strip() + "\n" + "对该搜索结果进行总结，然后回答问题：{}。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。".format(messages)
                 response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
                                                         messages=[
-                                                            {"role": "system","content": "请从以下给定的搜索结果中抽取信息，并对搜索结果进行总结，然后回答问题"},
+                                                            {"role": "system","content": "请从以下给定的搜索结果中抽取信息，并对搜索结果进行总结，然后回答问题。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。"},
                                                             {"role": "user", "content": i_say}
                                                         ],
                                                         temperature=0.9,
