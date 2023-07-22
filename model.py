@@ -9,7 +9,7 @@ import time
 
 # 全局变量
 openai.api_base= config.baseurl+"v1"
-
+wxyy_continue=config.oneperfect["wxyy-continue"]
 # 构造回复
 response_content={
                     "choices": [
@@ -33,6 +33,32 @@ def generate_openai(message):
                                             )
     return response["choices"][0]["message"]["content"]
 
+
+
+# 处理文心一言的连续对话问题
+def wxyy_message(messages):
+    if wxyy_continue:
+        user_message=[{"role": "user","content":""},{"role": "assistant","content":""}]
+        for index,word in  enumerate(messages):
+            if word["role"]=="system":
+                user_message[0]={"role": "user","content": word["content"]}
+                user_message[1]= {"role": "assistant","content":"好的，我知道了"}
+
+            elif word["role"]=="assistant" and messages[index-1]["role"]=="user":
+                user_message.append({"role": "user", "content": messages[index-1]["content"]})
+                user_message.append({"role": "assistant", "content": word["content"]})
+
+        user_message.append({"role": "user", "content": messages[-1]["content"]})
+
+    else:
+        user_message=[
+            {
+                "role": "user",
+                "content": messages[-1]["content"]
+            }
+        ]
+    return  user_message
+
 # 联网插件
 def generate_online(key,message):
 
@@ -43,21 +69,28 @@ def generate_online(key,message):
     urls = online.google(messages)
     for index, url in enumerate(urls[:5]):
         res = online.scrape_text(url['link'])
+        if res == "无法连接到该网页":
+            pass
         i_say = "这是第{}条搜索结果。".format \
             (index) + res.strip() + "\n" + "对该搜索结果进行总结，然后回答问题：{}。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。".format \
             (messages)
+
         content[-1]["content"]=i_say
-        response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
-                                                messages=content,
-                                                temperature=0.9,
-                                                stream=True, top_p=1, frequency_penalty=0,
-                                                presence_penalty=0,
-                                                )
-        response_content["choices"][0]["delta"]["content"] = "\n\n\n第{}条搜索结果\n".format(index)
-        yield f'data: {json.dumps(response_content)}\n\n'
-        for r in response:
-            if 'content' in r.choices[0].delta:
-                yield f'data: {json.dumps(r)}\n\n'
+        try:
+            response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
+                                                    messages=content,
+                                                    temperature=0.9,
+                                                    stream=True, top_p=1, frequency_penalty=0,
+                                                    presence_penalty=0,
+                                                    )
+
+            response_content["choices"][0]["delta"]["content"] = "\n\n\n第{}条搜索结果\n".format(index)
+            yield f'data: {json.dumps(response_content)}\n\n'
+            for r in response:
+                if 'content' in r.choices[0].delta:
+                    yield f'data: {json.dumps(r)}\n\n'
+        except:
+            yield 'data: {"choices": [{"delta": {"content": "[DONE]\n"}}]}\n\n'
     yield 'data: {"choices": [{"delta": {"content": "[DONE]\n"}}]}\n\n'
 
 
@@ -80,16 +113,10 @@ def generate_dalle(key,message):
 
 # 文心一言插件
 def generate_baidu(key,message):
-    messages = message[-1]["content"]
-    url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={}".format(key)
 
+    url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={}".format(key)
     payload = json.dumps({
-        "messages": [
-            {
-                "role": "user",
-                "content": messages
-            }
-        ],
+        "messages": wxyy_message(message),
         "stream": True
     })
     headers = {
@@ -108,5 +135,7 @@ def generate_baidu(key,message):
                 yield f'data: {json.dumps(response_content)}\n\n'
 
     yield 'data: {"choices": [{"delta": {"content": "[DONE]"}}]}\n\n'
+
+
 
 

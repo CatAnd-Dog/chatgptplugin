@@ -7,6 +7,7 @@ oneperfect={
 "gpt-online": True ,  # 是否开启gpt-3.5 的联网功能
 "gpt-image": True ,  # 是否开启gpt 的画图功能
 "baidu-wxyy": True ,  # 是否开启百度文心一言功能
+"wxyy-continue": False ,  # 是否开启百度文心一言的连续对话功能（上下文记忆）---可能会有大量的token消耗
 "gpt-plugins": False ,  # 是否开启gpt 的插件功能-----不要动，还没做好
 "newbing": False ,  # 是否开启必应功能-----不要动，还没做好
 "mj": False ,  # 是否开启mj画图功能-----不要动，还没做好
@@ -19,7 +20,7 @@ baseurl="https://api.openai.com/"
 
 
 # prompt 提示词部分
-content_online_keyword=[{"role": "system","content": "你是一个聪明的浏览器搜索小助手，你需要分析 用户的消息，并给出合理的浏览器搜索关键词。你仅需要返回适合浏览器搜索的关键词，不需要返回任何其他的消息。"},
+content_online_keyword=[{"role": "system","content": "你是一个聪明的浏览器搜索小助手，你需要分析用户的消息，并给出合理的浏览器搜索关键词。你仅需要返回适合浏览器搜索的关键词，不需要返回任何其他的消息。"},
                  {"role": "user", "content": "你好，请告诉我今天谷歌的股价是多少?"},
                   {"role": "assistant", "content": "谷歌股价"},
                   {"role": "user", "content": ""},

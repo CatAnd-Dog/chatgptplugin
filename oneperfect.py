@@ -5,7 +5,6 @@
 from flask import Flask, request, jsonify, Response, make_response,stream_with_context
 from flask_cors import CORS
 import config
-import model
 from model import generate_online,generate_dalle,generate_baidu
 
 
