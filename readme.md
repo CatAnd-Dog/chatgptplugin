@@ -6,7 +6,7 @@
 
 包含画图功能
 
-包含文心一言  ----暂时没有使用连续对话，毕竟真金白银，先用几天看看成本。后面更新连续对话。
+包含文心一言 
 
 包含在线搜索/播放 音乐和视频 --需修改前端代码---版权问题没有解决
 
@@ -16,7 +16,7 @@
 ## 使用说明
 ### 1. 安装
 ```
-git clone  
+git clone  https://github.com/CatAnd-Dog/chatgptplugin.git
 ```
 ```
 cd  chatgptplugin
@@ -25,7 +25,7 @@ cd  chatgptplugin
 docker build -t oneperfect .
 ```
 ```
-docker run  -p 15413:15413  oneperfect
+docker run  -p 15413:15413  -v /root/chatgptplugin/config.py:/app/config.py  oneperfect
 ```
 
 ### 2. 使用
@@ -36,12 +36,11 @@ docker run  -p 15413:15413  oneperfect
 
 如果第一步没有使用反向代理，那么此处的baseurl地址为：http://IP:15413     （IP为服务器的公网IP）
 
-3、直接使用
-创建模型：
+3、直接使用：   新增以下模型，可以实现对应的不同效果
 
 gpt-3.5-online    联网模型--使用官方的key
 
-image      画图模型--使用官方的key
+image          画图模型--使用官方的key
 
 wxyy      文心一言--使用官方的[access_token](https://ai.baidu.com/ai-doc/REFERENCE/Ck3dwjhhu)
 
@@ -51,3 +50,6 @@ gpt-3.5-turbo-16k、gpt-4、gpt-4-32k     PDF 文档翻译/总结
 
 4、apikey
 填写官方的key，推荐使用120刀的key
+
+5、[配置文件说明](./readme_config.md)
+

@@ -5,7 +5,7 @@
 from flask import Flask, request, jsonify, Response, make_response,stream_with_context
 from flask_cors import CORS
 import config
-from model import generate_online,generate_dalle,generate_baidu
+from model import generate_online,generate_dalle,generate_baidu,generate_plugin
 
 
 app = Flask(__name__)
@@ -51,8 +51,11 @@ def send_message():
         response = Response(stream_with_context(generate_baidu(key,message)), content_type='text/event-stream')
         return response
 
+    if model_name =="plugin" and oneperfect["gpt-plugins"]:
+        response = Response(stream_with_context(generate_plugin(key, message)), content_type='text/event-stream')
+        return response
     else:
-        return "error"
+        return str(data)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=15413)
