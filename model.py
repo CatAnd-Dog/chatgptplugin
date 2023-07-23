@@ -5,7 +5,6 @@ import json
 import config
 import requests
 import time
-import re
 
 
 
@@ -26,15 +25,16 @@ response_content={
                 }
 
 
-def generate_openai(message):
+def generate_function(message,funcion):
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
-                                            messages=message,
-                                            temperature=0.8,
-                                            top_p=1, frequency_penalty=0,
+                                            messages=[ {"role": "user", "content": message}],
+                                            functions=funcion,
+                                            temperature=1,
+                                            top_p=0.8, frequency_penalty=0,
                                             presence_penalty=0,
                                             )
-    return response["choices"][0]["message"]["content"]
+    return response["choices"][0]["message"]["function_call"]["arguments"]
 
 
 # 处理文心一言的连续对话问题
@@ -65,12 +65,14 @@ def wxyy_message(messages):
 def generate_online(key,message):
 
     openai.api_key = key
-    content=config.content_online_keyword
-    content[-1]["content"]=message[-1]["content"]
-    messages=generate_openai(content) # 获取最后一条消息,并进行关键词提取
-    print(messages)
+    function=config.content_online_keyword
+    messages=generate_function(message[-1]["content"],function) # 获取最后一条消息,并进行关键词提取
+    keyword=json.loads(messages)["keyword"]
+    if keyword == "":
+        keyword = "排行榜"
+    print(keyword)
     content=config.content_online_reply
-    urls = online.google(messages)
+    urls = online.google(keyword)
     for index, url in enumerate(urls[:5]):
         res = online.scrape_text(url['link'])
         if res == "无法连接到该网页":
@@ -156,16 +158,16 @@ def  generate_plugin(key,message):
 
         response_content["choices"][0]["delta"]["content"] = "还没有接入电影"
         yield f'data: {json.dumps(response_content)}\n\n'
+
     else:
-        content = config.content_plugins
-        content[-1]["content"] = s
-        message=generate_openai(content)
-        #message="意图：听歌。关键词：稻香"
-        match = re.match(r'意图：(.*?)。关键词：(.*?)$', message)
-        try:
-            intent, keyword = match.group(1), match.group(2)
-        except:
-            intent, keyword = "无", "无"
+        function = config.content_plugins     # 获取插件函数
+        message=generate_function(s,function) # 获取插件函数返回的消息
+        intent=json.loads(message)["intent"]
+        keyword=json.loads(message)["keyword"]
+        print(intent,keyword)
+        if keyword =="":
+            keyword="排行榜"
+
         if intent == "听歌":
             response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来听歌<br>"
             yield f'data: {json.dumps(response_content)}\n\n'

@@ -20,23 +20,45 @@ baseurl="https://api.openai.com/"
 
 
 # prompt 提示词部分
-content_online_keyword=[{"role": "system","content": "你是一个聪明的浏览器搜索小助手，你需要分析用户的消息，并给出合理的浏览器搜索关键词。你仅需要返回适合浏览器搜索的关键词，不需要返回任何其他的消息。"},
-                 {"role": "user", "content": "你好，请告诉我今天谷歌的股价是多少?"},
-                  {"role": "assistant", "content": "谷歌股价"},
-                  {"role": "user", "content": ""},
-                  ]   # 联网功能--提取用户的搜索关键词
+content_online_keyword=[
+    {
+      "name": "get_current_weather",
+      "description": "获取浏览器搜索关键词",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "获取用户的关键词信息，用作浏览器搜索。"
+          }
+        },
+        "required": ["keyword"]
+      }
+    }
+  ]   # 联网功能--提取用户的搜索关键词
 content_online_reply=[{"role": "system","content": "请从以下给定的搜索结果中抽取信息，并对搜索结果进行总结，然后回答问题。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。"},
                         {"role": "user", "content": ""}
                        ]   # 联网功能--总结联网搜索的结果
-content_plugins=[{"role": "system","content": "你是一个聪明的搜索小助手，你可以分析用户的意图以及提取相应的关键词信息。 用户的意图只能包含：听音乐，看电影这两种。 你需要根据用户的意图提取关键词，如果用户的意图是听音乐，你需要提取相应的歌名或者歌手名。如果用户的意图是看电影，你需要提取相应的电影名或者演员名。当你无法直接提取相应的关键词时，你需要根据用户的意图和内容推荐出相关性最大的歌名或者电影名。 你的意图只能是听音乐，看电影这两种中的其中一个，如果你实在无法分析出意图，则默认为听音乐。 我会给你几个示例，你需要按照示例进行回答。"},
-                 {"role": "user", "content": "你好，我想听周杰伦的稻香。"},
-                  {"role": "assistant", "content": "意图：听歌。关键词：稻香"},
-                    {"role": "user", "content": "你好，我记得有一首圣斗士星矢的主题曲，他是一首非常好听的日漫歌曲"},
-                  {"role": "assistant", "content": "意图：听歌。关键词：极乐净土"},
-                    {"role": "user", "content": "你好，我想看肖申克的救赎"},
-                  {"role": "assistant", "content": "意图：看电影。关键词：肖申克的救赎"},
-                  {"role": "user", "content": ""},
-                  ]   # 插件功能区--分析用户的意图，然后返回对应的搜索关键词
+content_plugins=[
+    {
+      "name": "get_current_weather",
+      "description": "获取用户的意图和关键词信息",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "enum": ["听歌", "看电影"]
+          },
+          "keyword": {
+            "type": "string",
+            "description": "获取用户的关键词信息，如果是听歌，就是歌手或者歌手名名，如果是看电影，就是演员或者电影名。需要根据用户的意图来判断，如果需要推荐，则给出推荐。"
+          }
+        },
+        "required": ["intent", "keyword"]
+      }
+    }
+  ]   # 插件功能区--分析用户的意图，然后返回对应的搜索关键词
 
 
 

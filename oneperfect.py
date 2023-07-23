@@ -55,7 +55,7 @@ def send_message():
         response = Response(stream_with_context(generate_plugin(key, message)), content_type='text/event-stream')
         return response
     else:
-        return str(data)
+        return "模型不存在或者模型已禁用"
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=15413)
