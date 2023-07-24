@@ -38,7 +38,7 @@ def generate_function(message,funcion):
     try:
         return response["choices"][0]["message"]["function_call"]["arguments"]
     except:
-        return {"intent":"无法识别","keyword":"oneperfect.cn"}
+        return '{"intent":"无法识别","keyword":"oneperfect.cn"}'
 
 
 # 处理文心一言的连续对话问题
