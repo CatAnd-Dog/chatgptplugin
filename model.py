@@ -167,7 +167,7 @@ def  generate_plugin(key,message):
             yield f'data: {json.dumps(response_content)}\n\n'
         try:
             bb = get_move_iframe(s[2:])
-            ss = '<iframe allowfullscreen="true" border="0" frameborder="0" marginheight="0" marginwidth="0" scrolling="no" src="{}" width="650px" height="400px" ></iframe>'.format(
+            ss = '<iframe allowfullscreen="true" border="0" frameborder="0" marginheight="0" marginwidth="0" scrolling="no" src="{}" width="100%" height="400px" ></iframe>'.format(
                 bb)
         except:
             ss = "没有找到该电影，请检查一下输入是否正确。例：电影383/play-731813"
