@@ -12,6 +12,7 @@ import time
 # 全局变量
 openai.api_base= config.baseurl+"v1"
 wxyy_continue=config.oneperfect["wxyy-continue"]
+online_id=config.online
 happyplugine=config.happy
 
 # 构造回复
@@ -38,7 +39,7 @@ def generate_function(message,funcion):
     try:
         return response["choices"][0]["message"]["function_call"]["arguments"]
     except:
-        return '{"intent":"无法识别","keyword":"oneperfect.cn"}'
+        return '{"intent":"无法识别","keyword":"热搜"}'
 
 
 # 处理文心一言的连续对话问题
@@ -76,7 +77,7 @@ def generate_online(key,message):
         keyword = "排行榜"
     print(keyword)
     content=config.content_online_reply
-    urls = online.google(keyword)
+    urls = online.google(keyword,online_id)
     for index, url in enumerate(urls[:5]):
         res = online.scrape_text(url['link'])
         if res == "无法连接到该网页":

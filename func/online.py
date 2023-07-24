@@ -1,9 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 
+def google(query,id=0):
+    if id ==0:
+        print("1")
+        return google_1(query)
+    elif id == 1 :
+        print("2")
+        return google_2(query)
 
-
-def google(query):
+def google_1(query):
     query = query # 在此处替换您要搜索的关键词
     url = f"https://www.google.com/search?q={query}"
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'}
@@ -21,10 +27,30 @@ def google(query):
             title = g.find('h3').text
             item = {'title': title, 'link': link}
             results.append(item)
-
     for r in results:
         print(r['link'])
     return results
+
+
+def google_2(query):
+    results = []
+    url = "https://lite.duckduckgo.com/lite/"
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'}
+
+    data={
+        "q":query
+
+    }
+    response = requests.post(url, data=data,headers=headers)
+    response.encoding = "utf-8"
+    soup = BeautifulSoup(response.text, 'html.parser')
+    # soup=soup.find("tbody")
+    for g in soup.find_all("a"):
+        item = {'title': g, 'link': g['href']}
+        print(g['href'])
+        results.append(item)
+    return results
+
 
 def scrape_text(url) -> str:
     """Scrape text from a webpage

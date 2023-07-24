@@ -62,6 +62,9 @@ content_plugins=[
 
 
 
+# 联网搜索引擎选择 0：谷歌 google.com  1：https://lite.duckduckgo.com/lite --我也不知道这个是什么，别人推荐的
+online=0
+
 
 # 娱乐插件功能,
 happy={
