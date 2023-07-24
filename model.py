@@ -1,5 +1,6 @@
 from func  import online
 from func.happyplugin import get163
+from func.movies import get_movie_list,get_move_iframe
 import openai
 import json
 import config
@@ -34,7 +35,10 @@ def generate_function(message,funcion):
                                             top_p=0.8, frequency_penalty=0,
                                             presence_penalty=0,
                                             )
-    return response["choices"][0]["message"]["function_call"]["arguments"]
+    try:
+        return response["choices"][0]["message"]["function_call"]["arguments"]
+    except:
+        return {"intent":"无法识别","keyword":"oneperfect.cn"}
 
 
 # 处理文心一言的连续对话问题
@@ -90,7 +94,7 @@ def generate_online(key,message):
                                                     presence_penalty=0,
                                                     )
 
-            response_content["choices"][0]["delta"]["content"] = "\n\n\n第{}条搜索结果\n".format(index)
+            response_content["choices"][0]["delta"]["content"] = "\n\n\n[第{}条搜索结果]({})\n".format(index,url['link'])
             yield f'data: {json.dumps(response_content)}\n\n'
             for r in response:
                 if 'content' in r.choices[0].delta:
@@ -148,15 +152,26 @@ def  generate_plugin(key,message):
     openai.api_key = key
     s = message[-1]["content"]
     if s.startswith("音乐") and s[2:].isdigit():
-        response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来听歌<br>"
-        yield f'data: {json.dumps(response_content)}\n\n'
+        for c in "【oneperfect】跟我一起来听歌【oneperfect】<br>":
+            time.sleep(0.05)
+            response_content["choices"][0]["delta"]["content"] = c
+            yield f'data: {json.dumps(response_content)}\n\n'
         music = f"""<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=auto height==auto src="//music.163.com/outchain/player?type=2&id={s[2:]}&auto=0&height=auto"></iframe><br>发送音乐+id，即可切换歌曲，比如：音乐5257138<br>版权标识为1则无法听歌"""
         response_content["choices"][0]["delta"]["content"] = music
         yield f'data: {json.dumps(response_content)}\n\n'
 
-    elif s.startswith("电影") and s[2:].isdigit():
-
-        response_content["choices"][0]["delta"]["content"] = "还没有接入电影"
+    elif s.startswith("电影") :
+        for c in "【oneperfect】跟我一起来看电影【oneperfect】<br>":
+            time.sleep(0.05)
+            response_content["choices"][0]["delta"]["content"] = c
+            yield f'data: {json.dumps(response_content)}\n\n'
+        try:
+            bb = get_move_iframe(s[2:])
+            ss = '<iframe allowfullscreen="true" border="0" frameborder="0" marginheight="0" marginwidth="0" scrolling="no" src="{}" width="650px" height="400px" ></iframe>'.format(
+                bb)
+        except:
+            ss = "没有找到该电影，请检查一下输入是否正确。例：电影383/play-731813"
+        response_content["choices"][0]["delta"]["content"] = ss
         yield f'data: {json.dumps(response_content)}\n\n'
 
     else:
@@ -165,33 +180,49 @@ def  generate_plugin(key,message):
         intent=json.loads(message)["intent"]
         keyword=json.loads(message)["keyword"]
         print(intent,keyword)
-        if keyword =="":
-            keyword="排行榜"
 
         if intent == "听歌":
             response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来听歌<br>"
             yield f'data: {json.dumps(response_content)}\n\n'
-            reply = get163(keyword,happyplugine["proxy"])
-            for r in reply:
-                user_reply="歌名：{}，id：{}，版权：{}<br>".format(r[0],r[1],r[2])
-                for c in user_reply:
-                    response_content["choices"][0]["delta"]["content"] = c
-                    yield f'data: {json.dumps(response_content)}\n\n'
-                    time.sleep(0.03)
+            if keyword == "":
+                pass
+            else:
+                reply = get163(keyword,happyplugine["proxy"])
+                for r in reply:
+                    user_reply="歌名：{}，id：{}，版权：{}<br>".format(r[0],r[1],r[2])
+                    for c in user_reply:
+                        response_content["choices"][0]["delta"]["content"] = c
+                        yield f'data: {json.dumps(response_content)}\n\n'
+                        time.sleep(0.03)
 
-            music=f"""<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=auto height==auto src="//music.163.com/outchain/player?type=2&id={reply[0][1]}&auto=0&height=auto"></iframe><br>发送音乐+id，即可切换歌曲，比如：音乐5257138<br>版权标识为1则无法听歌"""
-            response_content["choices"][0]["delta"]["content"] = music
-            yield f'data: {json.dumps(response_content)}\n\n'
+                music=f"""<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=auto height==auto src="//music.163.com/outchain/player?type=2&id={reply[0][1]}&auto=0&height=auto"></iframe><br>发送音乐+id，即可切换歌曲，比如：音乐5257138<br>版权标识为1则无法听歌"""
+                response_content["choices"][0]["delta"]["content"] = music
+                yield f'data: {json.dumps(response_content)}\n\n'
 
         if intent == "看电影":
+            response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来看电影。发送电影+id，即可开始播放，比如：电影383/play-731813<br>"
+            yield f'data: {json.dumps(response_content)}\n\n'
+            s = '<style> .wrapper { display: flex;flex-wrap: wrap; list-style: none; padding: 0; margin: 0; }  .wrapper li {  width: calc(100% / 3);  text-align: center; margin-bottom: 10px; }.wrapper ul { padding: 0;  margin: 0; list-style: none;} .wrapper ul li { margin-bottom: 5px; }</style><ul class="wrapper">'
 
-            response_content["choices"][0]["delta"]["content"] = "还没有接入电影"
+            if keyword == "":
+                s = "没有识别到你的电影名，请重新输入。"
+            else:
+                try:
+                    data=get_movie_list(keyword)
+                except:
+                    data=[[["//img.y80s.tv/upload/img/201608/383.jpg","没有找到该电影{}，请检查一下输入是否正确。".format(keyword)],[""]]]
+                for i in data:
+                    s += '<li><img src="{}" width="100px" ><br>'.format(i[0][0]) + i[0][1] + "<br>"
+                    for j in i[1]:
+                        s +="<p>" + j + "</p>"
+                    s += "</li>"
+                s += "</ul>"
+            response_content["choices"][0]["delta"]["content"] = s
             yield f'data: {json.dumps(response_content)}\n\n'
 
-        else:
-            response_content["choices"][0]["delta"]["content"] = "不能识别用户的意图，请重新输入"
-            yield f'data: {json.dumps(response_content)}\n\n'
-    pass
+
+
+
 
 
 # 其他模型---官网转发
