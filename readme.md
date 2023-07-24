@@ -44,7 +44,7 @@ image    画图模型--使用官方的key
 
 wxyy    文心一言--使用官方的[access_token](https://ai.baidu.com/ai-doc/REFERENCE/Ck3dwjhhu)
 
-plugins    在线搜索/播放  音乐和视频
+plugin    在线搜索/播放  音乐和视频
 
 gpt-3.5-turbo-16k、gpt-4、gpt-4-32k    PDF 文档翻译/总结
 
