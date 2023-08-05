@@ -53,3 +53,8 @@ gpt-3.5-turbo-16k、gpt-4、gpt-4-32k    PDF 文档翻译/总结
 
 5、[配置文件说明](./readme_config.md)
 
+### 3. 贡献与参考
+https://github.com/Kadxy
+https://github.com/DUNKILL
+https://github.com/binary-husky/gpt_academic
+https://github.com/ading2210/poe-api
