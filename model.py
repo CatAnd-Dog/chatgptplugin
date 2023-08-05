@@ -1,36 +1,37 @@
-from func  import online
+from func import online
 from func.happyplugin import get163
-from func.movies import get_movie_list,get_move_iframe
+from func.movies import get_movie_list, get_move_iframe
 import openai
 import json
 import config
 import requests
 import time
 
-
-
 # 全局变量
-openai.api_base= config.baseurl+"v1"
-wxyy_continue=config.oneperfect["wxyy-continue"]
-online_id=config.online
-happyplugine=config.happy
+openai.api_base = config.baseurl + "v1"
+wxyy_continue = config.oneperfect["wxyy-continue"]
+online_id = config.online
+happyplugine = config.happy
+
+minimax_continue = config.oneperfect["minimax_continue"]
+minimax_api_key = config.oneperfect["mini_api_key"]
+minimax_group_id = config.oneperfect["mini_group_id"]
 
 # 构造回复
-response_content={
-                    "choices": [
-                        {
-                            "delta": {
-                                "content": "oneperfect"
-                            }
-                        }
-                    ]
-                }
+response_content = {
+    "choices": [
+        {
+            "delta": {
+                "content": "oneperfect"
+            }
+        }
+    ]
+}
 
 
-def generate_function(message,funcion):
-
+def generate_function(message, funcion):
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
-                                            messages=[ {"role": "user", "content": message}],
+                                            messages=[{"role": "user", "content": message}],
                                             functions=funcion,
                                             temperature=1,
                                             top_p=0.8, frequency_penalty=0,
@@ -45,48 +46,48 @@ def generate_function(message,funcion):
 # 处理文心一言的连续对话问题
 def wxyy_message(messages):
     if wxyy_continue:
-        user_message=[{"role": "user","content":""},{"role": "assistant","content":""}]
-        for index,word in  enumerate(messages):
-            if word["role"]=="system":
-                user_message[0]={"role": "user","content": word["content"]}
-                user_message[1]= {"role": "assistant","content":"好的，我知道了"}
+        user_message = [{"role": "user", "content": ""}, {"role": "assistant", "content": ""}]
+        for index, word in enumerate(messages):
+            if word["role"] == "system":
+                user_message[0] = {"role": "user", "content": word["content"]}
+                user_message[1] = {"role": "assistant", "content": "好的，我知道了"}
 
-            elif word["role"]=="assistant" and messages[index-1]["role"]=="user":
-                user_message.append({"role": "user", "content": messages[index-1]["content"]})
+            elif word["role"] == "assistant" and messages[index - 1]["role"] == "user":
+                user_message.append({"role": "user", "content": messages[index - 1]["content"]})
                 user_message.append({"role": "assistant", "content": word["content"]})
 
         user_message.append({"role": "user", "content": messages[-1]["content"]})
 
     else:
-        user_message=[
+        user_message = [
             {
                 "role": "user",
                 "content": messages[-1]["content"]
             }
         ]
-    return  user_message
+    return user_message
+
 
 # 联网插件
-def generate_online(key,message):
-
+def generate_online(key, message):
     openai.api_key = key
-    function=config.content_online_keyword
-    messages=generate_function(message[-1]["content"],function) # 获取最后一条消息,并进行关键词提取
-    keyword=json.loads(messages)["keyword"]
+    function = config.content_online_keyword
+    messages = generate_function(message[-1]["content"], function)  # 获取最后一条消息,并进行关键词提取
+    keyword = json.loads(messages)["keyword"]
     if keyword == "":
         keyword = "排行榜"
     print(keyword)
-    content=config.content_online_reply
-    urls = online.google(keyword,online_id)
+    content = config.content_online_reply
+    urls = online.google(keyword, online_id)
     for index, url in enumerate(urls[:5]):
         res = online.scrape_text(url['link'])
         if res == "无法连接到该网页":
             pass
         i_say = "这是第{}条搜索结果。".format \
-            (index) + res.strip() + "\n" + "对该搜索结果进行总结，然后回答问题：{}。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。".format \
-            (messages)
+                    (index) + res.strip() + "\n" + "对该搜索结果进行总结，然后回答问题：{}。如果你无法找到问题的答案，则不需要返回总结的结果，仅简单的返回结果即可。".format \
+                    (messages)
 
-        content[-1]["content"]=i_say
+        content[-1]["content"] = i_say
         try:
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo-16k",
                                                     messages=content,
@@ -95,7 +96,8 @@ def generate_online(key,message):
                                                     presence_penalty=0,
                                                     )
 
-            response_content["choices"][0]["delta"]["content"] = "\n\n\n[第{}条搜索结果]({})\n".format(index,url['link'])
+            response_content["choices"][0]["delta"]["content"] = "\n\n\n[第{}条搜索结果]({})\n".format(index,
+                                                                                                       url['link'])
             yield f'data: {json.dumps(response_content)}\n\n'
             for r in response:
                 if 'content' in r.choices[0].delta:
@@ -106,7 +108,7 @@ def generate_online(key,message):
 
 
 # 画图插件
-def generate_dalle(key,message):
+def generate_dalle(key, message):
     openai.api_key = key
     messages = message[-1]["content"]
     res = openai.Image.create(
@@ -123,8 +125,7 @@ def generate_dalle(key,message):
 
 
 # 文心一言插件
-def generate_baidu(key,message):
-
+def generate_baidu(key, message):
     url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={}".format(key)
     payload = json.dumps({
         "messages": wxyy_message(message),
@@ -148,8 +149,79 @@ def generate_baidu(key,message):
     yield 'data: {"choices": [{"delta": {"content": "[DONE]"}}]}\n\n'
 
 
+# MiniMax插件
+def minimax_message(messages):
+    if minimax_continue:
+        user_message = [{"sender_type": "USER", "sender_name": "用户", "text": ""},
+                        {"sender_type": "BOT", "sender_name": "MiniMax", "text": ""}]
+        for index, word in enumerate(messages):
+            if word["role"] == "system":
+                user_message[0] = {"sender_type": "USER", "sender_name": "用户", "text": word["content"]}
+                user_message[1] = {"sender_type": "BOT", "sender_name": "MiniMax", "text": "好的，我知道了"}
+
+            elif word["role"] == "assistant" and messages[index - 1]["role"] == "user":
+                user_message.append(
+                    {"sender_type": "USER", "sender_name": "用户", "text": messages[index - 1]["content"]})
+                user_message.append({"sender_type": "BOT", "sender_name": "MiniMax", "text": word["content"]})
+
+        user_message.append({"sender_type": "USER", "sender_name": "用户", "text": messages[-1]["content"]})
+
+    else:
+        user_message = [
+            {
+                "sender_type": "USER",
+                "sender_name": "用户",
+                "text": messages[-1]["content"]
+            }
+        ]
+
+    return user_message
+
+
+def generate_minimax(message):
+    url = "https://api.minimax.chat/v1/text/chatcompletion_pro?GroupId={}".format(minimax_group_id)
+    payload = {
+        "bot_setting": [
+            {
+                "bot_name": "MiniMax",
+                "content": "MiniMax是一款国产大模型。",
+            }
+        ],
+        "model": "abab5.5-chat",
+        "stream": True,
+        "tokens_to_generate": 4096,
+        "messages": minimax_message(message),
+        "reply_constraints": {
+            "sender_type": "BOT",
+            "sender_name": "MiniMax"
+        },
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + minimax_api_key
+    }
+
+    response = requests.request("POST", url, headers=headers, json=payload, stream=True)
+
+    for R in response.iter_lines():
+        if R:
+            rep = R.decode('utf-8')
+            parsed_data = json.loads(rep[6:])
+            if "usage" in parsed_data:
+                return  # 当前为流式完结chunk，无增量信息
+            delta_content = parsed_data["choices"][0]["messages"]
+            for c in delta_content:
+                time.sleep(0.05)
+                response_content["choices"][0]["delta"]["content"] = c["text"]
+                # print(response_content)
+                yield f'data: {json.dumps(response_content)}\n\n'
+
+    yield 'data: {"choices": [{"delta": {"content": "[DONE]"}}]}\n\n'
+
+
 # 娱乐插件
-def  generate_plugin(key,message):
+def generate_plugin(key, message):
     openai.api_key = key
     s = message[-1]["content"]
     if s.startswith("音乐") and s[2:].isdigit():
@@ -161,7 +233,7 @@ def  generate_plugin(key,message):
         response_content["choices"][0]["delta"]["content"] = music
         yield f'data: {json.dumps(response_content)}\n\n'
 
-    elif s.startswith("电影") :
+    elif s.startswith("电影"):
         for c in "【oneperfect】跟我一起来看电影【oneperfect】<br>":
             time.sleep(0.05)
             response_content["choices"][0]["delta"]["content"] = c
@@ -176,11 +248,11 @@ def  generate_plugin(key,message):
         yield f'data: {json.dumps(response_content)}\n\n'
 
     else:
-        function = config.content_plugins     # 获取插件函数
-        message=generate_function(s,function) # 获取插件函数返回的消息
-        intent=json.loads(message)["intent"]
-        keyword=json.loads(message)["keyword"]
-        print(intent,keyword)
+        function = config.content_plugins  # 获取插件函数
+        message = generate_function(s, function)  # 获取插件函数返回的消息
+        intent = json.loads(message)["intent"]
+        keyword = json.loads(message)["keyword"]
+        print(intent, keyword)
 
         if intent == "听歌":
             response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来听歌<br>"
@@ -188,20 +260,21 @@ def  generate_plugin(key,message):
             if keyword == "":
                 pass
             else:
-                reply = get163(keyword,happyplugine["proxy"])
+                reply = get163(keyword, happyplugine["proxy"])
                 for r in reply:
-                    user_reply="歌名：{}，id：{}，版权：{}<br>".format(r[0],r[1],r[2])
+                    user_reply = "歌名：{}，id：{}，版权：{}<br>".format(r[0], r[1], r[2])
                     for c in user_reply:
                         response_content["choices"][0]["delta"]["content"] = c
                         yield f'data: {json.dumps(response_content)}\n\n'
                         time.sleep(0.03)
 
-                music=f"""<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=auto height==auto src="//music.163.com/outchain/player?type=2&id={reply[0][1]}&auto=0&height=auto"></iframe><br>发送音乐+id，即可切换歌曲，比如：音乐5257138<br>版权标识为1则无法听歌"""
+                music = f"""<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=auto height==auto src="//music.163.com/outchain/player?type=2&id={reply[0][1]}&auto=0&height=auto"></iframe><br>发送音乐+id，即可切换歌曲，比如：音乐5257138<br>版权标识为1则无法听歌"""
                 response_content["choices"][0]["delta"]["content"] = music
                 yield f'data: {json.dumps(response_content)}\n\n'
 
         if intent == "看电影":
-            response_content["choices"][0]["delta"]["content"] = "【oneperfect】跟我一起来看电影。发送电影+id，即可开始播放，比如：电影383/play-731813<br>"
+            response_content["choices"][0]["delta"][
+                "content"] = "【oneperfect】跟我一起来看电影。发送电影+id，即可开始播放，比如：电影383/play-731813<br>"
             yield f'data: {json.dumps(response_content)}\n\n'
             s = '<style> .wrapper { display: flex;flex-wrap: wrap; list-style: none; padding: 0; margin: 0; }  .wrapper li {  width: calc(100% / 3);  text-align: center; margin-bottom: 10px; }.wrapper ul { padding: 0;  margin: 0; list-style: none;} .wrapper ul li { margin-bottom: 5px; }</style><ul class="wrapper">'
 
@@ -209,25 +282,21 @@ def  generate_plugin(key,message):
                 s = "没有识别到你的电影名，请重新输入。"
             else:
                 try:
-                    data=get_movie_list(keyword)
+                    data = get_movie_list(keyword)
                 except:
-                    data=[[["//img.y80s.tv/upload/img/201608/383.jpg","没有找到该电影{}，请检查一下输入是否正确。".format(keyword)],[""]]]
+                    data = [[["//img.y80s.tv/upload/img/201608/383.jpg",
+                              "没有找到该电影{}，请检查一下输入是否正确。".format(keyword)], [""]]]
                 for i in data:
                     s += '<li><img src="{}" width="100px" ><br>'.format(i[0][0]) + i[0][1] + "<br>"
                     for j in i[1]:
-                        s +="<p>" + j + "</p>"
+                        s += "<p>" + j + "</p>"
                     s += "</li>"
                 s += "</ul>"
             response_content["choices"][0]["delta"]["content"] = s
             yield f'data: {json.dumps(response_content)}\n\n'
 
 
-
-
-
-
 # 其他模型---官网转发
-def  generate_others(key,message):
+def generate_others(key, message):
     openai.api_key = key
     pass
-
